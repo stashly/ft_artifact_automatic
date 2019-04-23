@@ -1,2 +1,4 @@
 # ft_artifact_automatic
 Matlab-based function for automatically detecting and removing/attenuating EEG artifacts
+
+This function largely uses functions from the FieldTrip toolbox (http://www.fieldtriptoolbox.org/) and requires data to be in the FieldTrip data structure format.  Data should already be epoched and bipolar EOG channels are required as well.  The function default settings are based on EEG data but all options can be set by the user and so the function could in principle be used with MEG data as well.  The current version has been tested on 64 channel EEG data from Brain Products (https://www.brainproducts.com/) and Biosemi (https://www.biosemi.com/) EEG recording systems.  The function is currently compatible with PC and Mac.  The current version has been tested on Matlab 2014b.
