@@ -110,6 +110,7 @@ for i = 1:length(iParticipants)
     cfg.step_winsize = 0.4;             %   Length of sliding window for step function artifact detection and removal in seconds
     cfg.step_winjump = 0.01;            %   Size of step for moving sliding window across time axis for step function artifact detection and removal in seconds
     cfg.step_chanprop_thresh = 0.1;     %   Maximum proportion of trials exhibiting artifacts before channel is considered bad for step function artifact detection
+    cfg.thresh_chanprop_thresh = 0.1;   %   Maximum proportion of trials exhibiting artifacts before channel is considered bad for threshold function artifact detection
     cfg.thresh_range = 200;             %   Maximum range for threshold artifact dection and removal in microvolts
     cfg.thresh_max = 100;               %   Maximum value for threshold artifact detection and removal
     cfg.thresh_min = -100;              %   Minimum value for threshold artifact detection and removal
