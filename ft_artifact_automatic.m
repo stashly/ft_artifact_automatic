@@ -130,6 +130,11 @@ function [data_clean bad_chan_lab bad_trial_lab] = ft_artifact_automatic(cfg, da
 %                               on a single channel before that channels is
 %                               considered bad for step function artifacts.
 %                               (default = 0.1)
+%   cfg.thresh_chanprop_thresh = number indicating proportion of bad trials
+%                               on a single channel before that channels is
+%                               considered bad for threshold function 
+%                               artifacts.
+%                               (default = 0.1)
 %   cfg.thresh_range = number indicating maximum peak-to-peak voltage range
 %                       for detecting threshold artifacts.
 %                       (default = 200 microvolts)
@@ -199,6 +204,7 @@ step_voltthresh = 30;               %   Voltage threshold for step function arti
 step_winsize = 0.4;                 %   Length of sliding window for step function artifact detection and removal in seconds
 step_winjump = 0.01;                %   Size of step for moving sliding window across time axis for step function artifact detection and removal in seconds
 step_chanprop_thresh = 0.1;         %   Maximum proportion of trials exhibiting artifacts before channel is considered bad for step function artifact detection
+thresh_chanprop_thresh = 0.1;       %   Maximum proportion of trials exhibiting artifacts before channel is considered bad for threshold function artifact detection
 thresh_range = 200;                 %   Maximum range for threshold artifact dection and removal in microvolts
 thresh_max = 100;                   %   Maximum value for threshold artifact detection and removal in microvolts
 thresh_min = -100;                  %   Minimum value for threshold artifact detection and removal in microvolts
@@ -291,6 +297,9 @@ if isfield(cfg, 'step_winjump')
 end;
 if isfield(cfg, 'step_chanprop_thresh')
     step_chanprop_thresh = cfg.step_chanprop_thresh;    %   Maximum proportion of trials exhibiting artifacts before channel is considered bad for step function artifact detection
+end;
+if isfield(cfg, 'thresh_chanprop_thresh')
+    thresh_chanprop_thresh = cfg.thresh_chanprop_thresh;    %   Maximum proportion of trials exhibiting artifacts before channel is considered bad for step function artifact detection
 end;
 if isfield(cfg, 'thresh_range')               
     thresh_range = cfg.thresh_range;        %   Maximum range for threshold artifact dection and removal in microvolts
@@ -1021,28 +1030,75 @@ clear step_winend step_winhalf step_winlength step_winstart step_winstep;
 clear data_recomb2;
 
 %   Reject trials based on threshold max, min, and range
-cfg = [];
-cfg.continuous = 'no';
-threshoffset = ones(length(data_step.trial),1) * find(data_step.time{1} == timeaxis_zero) - find(data_step.time{1} == timeaxis_beg);
-cfg.trl = [data_step.sampleinfo threshoffset];
-cfg.artfctdef.threshold.range = thresh_range;
-cfg.artfctdef.threshold.max = thresh_max;
-cfg.artfctdef.threshold.min = thresh_min;
-[cfg threshart] = ft_artifact_threshold(cfg, data_step);
-data_threshold = ft_rejectartifact(cfg, data_step);
-
-%   Keep track of trials removed
-if ~isempty(threshart)  %   Only execute if threshold artifacts were detected
-    thresh_bad_trials_ind = data_step.trialinfo(find(ismember(data_step.sampleinfo(:,1), threshart(:,1))), 1);
-else
-    thresh_bad_trials_ind = [];
+%   Put data into 3D matrix with trials by channels by time points
+data_thresh_trialmat = zeros(length(data_step.trial), length(data_step.label), length(data_step.time{1}));
+for i = 1:length(data_step.trial)
+    data_thresh_trialmat(i,:,:) = data_step.trial{i};
 end;
 
-%   Update trials removed in original data terms
+%   Identify above threshold values across time axis for each trial and channel
+max_thresh = zeros(size(data_thresh_trialmat, 1), size(data_thresh_trialmat, 2));
+min_thresh = zeros(size(data_thresh_trialmat, 1), size(data_thresh_trialmat, 2));
+abs_thresh = zeros(size(data_thresh_trialmat, 1), size(data_thresh_trialmat, 2));
+max_thresh_ind = data_thresh_trialmat > thresh_max;
+min_thresh_ind = data_thresh_trialmat < thresh_min;
+abs_thresh_ind = abs(data_thresh_trialmat) > thresh_range;
+
+%   Combine matrices to get all data points above threshold
+all_thresh_ind = (max_thresh_ind+min_thresh_ind+abs_thresh_ind)>0;
+
+%   Create matrix identifying trial x channel data points that are above threshold
+thresh_exceedsthresh = (sum(all_thresh_ind,3))>0;
+    
+%   Find proportion of trials above threshold for each channel
+thresh_exceedsthresh_chanprop = (sum(thresh_exceedsthresh, 1) / size(thresh_exceedsthresh, 2))';
+
+%   Identify channels where proportion of bad trials is high suggesting a bad channel
+thresh_bad_chans = find(thresh_exceedsthresh_chanprop > thresh_chanprop_thresh);
+thresh_bad_chans_lab = data_step.label(thresh_bad_chans);    %   Keep track of labels of channels marked as bad
+
+%   Update above threshold matrix to remove bad channels
+thresh_exceedsthresh(:,thresh_bad_chans) = [];
+
+%   Identify trials above threshold
+thresh_bad_trials = find(sum(thresh_exceedsthresh, 2) > 0);
+thresh_bad_trials_ind = data_step.trialinfo(thresh_bad_trials, 1);   %   Keep track of indices of trials marked as bad
+
+%   Remove bad channels and trials from data
+cfg = [];
+if ~isempty(thresh_bad_chans)
+    cfg.channel = setdiff(1:length(data_step.label), thresh_bad_chans);
+else
+    cfg.channel = data_step.label;
+end;
+if ~isempty(thresh_bad_trials)
+    cfg.trials = setdiff(1:length(data_step.trial), thresh_bad_trials);
+else
+    cfg.trials = 1:length(data_step.trial);
+end;
+
+%   Provide feedback if all channels are detected as bad
+if isempty(cfg.channel)
+    warning(strcat('All channels detected as bad. Function will crash!  Problem is with participant:', partID));
+    track_warnings = [track_warnings; lastwarn];
+end;
+
+%   Provide feedback if all trials are detected as bad
+if isempty(cfg.trials)
+    warning(strcat('All trials detected as bad. Function will crash!  Problem is with participant:', partID));
+    track_warnings = [track_warnings; lastwarn];
+end;
+
+data_thresh = ft_selectdata(cfg, data_step);
+data_rank = data_rank - length(thresh_bad_chans);     %    Keep track of rank of data
+
+%   Update channels and trials removed in original data terms
+removed_channels_lab = [removed_channels_lab; thresh_bad_chans_lab];
 removed_trials_ind = [removed_trials_ind; thresh_bad_trials_ind];
 
 %   Clean up variables created temporarily
-clear threshoffset threshart thresh_bad_trials_ind data_step;
+clear data_thresh_trialmat thresh_exceedsthresh*;
+clear thresh_bad* thresh_exceedsthresh*;
 clear data_step;
 
 %   Transform data appropriately to optimize detection of muscle artifacts
@@ -1063,7 +1119,7 @@ cfg.rectify = 'yes';
 cfg.bpfilttype = 'but';
 cfg.boxcar = 0.2;
 cfg.demean = 'yes';
-data_temp_musc = ft_preprocessing(cfg, data_threshold);
+data_temp_musc = ft_preprocessing(cfg, data_thresh);
 
 %   Put data into 3D matrix with trials by channels by time points
 musc_badchans_lab = [];     %   Keep track of bad channels detected
@@ -1106,9 +1162,9 @@ end;
 
 %   Remove bad trials and channels due to muscle artifacts from data prior to optimizing for detection of muscle artifacts
 cfg = [];
-cfg.trials = setdiff(1:length(data_threshold.trial), find(ismember(data_threshold.trialinfo(:,1), musc_badtrials_ind)));
-cfg.channel = setdiff(data_threshold.label, musc_badchans_lab);
-data_musc = ft_selectdata(cfg, data_threshold);
+cfg.trials = setdiff(1:length(data_thresh.trial), find(ismember(data_thresh.trialinfo(:,1), musc_badtrials_ind)));
+cfg.channel = setdiff(data_thresh.label, musc_badchans_lab);
+data_musc = ft_selectdata(cfg, data_thresh);
 
 %   Update channels and trials removed in original data terms
 removed_channels_lab = [removed_channels_lab; musc_badchans_lab];
@@ -1119,7 +1175,7 @@ data_rank = data_rank - length(musc_badchans_lab);
 
 %   Clean up variables created temporarily
 clear data_temp_musc musc_bad* musc_exceeds* musc_var* data_musc_trialmat;
-clear data_threshold;
+clear data_thresh;
 
 %   Plot all trials removed
 if ~isempty(removed_trials_ind)
@@ -1247,6 +1303,7 @@ data_allchans2.funcset.numcomp1 = numcomp1;
 data_allchans2.funcset.part_ID = part_ID;
 data_allchans2.funcset.plotfolder = plotfolder;
 data_allchans2.funcset.step_chanprop_thresh = step_chanprop_thresh;
+data_allchans2.funcset.thresh_chanprop_thresh = thresh_chanprop_thresh;
 data_allchans2.funcset.step_voltthresh = step_voltthresh;
 data_allchans2.funcset.step_winsize = step_winsize;
 data_allchans2.funcset.thresh_max = thresh_max;
@@ -1281,7 +1338,7 @@ disp(chan_message{1});
 disp(trial_message{1});
 
 if ~isempty(data_clean.warnings)
-    warnings_message = strcat({'Note, this function returned '}, int2str(length(track_warnings)), {' warning messages (see warnings field).'})
+    warnings_message = strcat({'Note, this function returned '}, int2str(size(track_warnings,1)), {' warning messages (see warnings field).'})
 end;
 
 end
