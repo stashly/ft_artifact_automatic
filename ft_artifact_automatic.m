@@ -1,8 +1,10 @@
 function [data_clean bad_chan_lab bad_trial_lab] = ft_artifact_automatic(cfg, data, eogh, eogv)
 % FT_ARTIFACT_AUTOMATIC searches within data segments provided and
 % automatically finds and removes artifactual data.  The function should
-% be in the same folder as the current directory.  The following
-% artifact rejection/correction steps are implemented:
+% be in the same folder as the current directory.  The data must contain
+% an elec (electrode definitio) field for the channel recovery step to 
+% run correctly. The following artifact rejection/correction steps are 
+% implemented:
 %
 % 1) Trials and channels with very extreme kurtosis and variance 
 %    values are removed - aimed at unusual but large artifacts that 
@@ -43,7 +45,7 @@ function [data_clean bad_chan_lab bad_trial_lab] = ft_artifact_automatic(cfg, da
 %   channels and trials prior to using this function.
 %
 % Use as:
-%   [data_clean, bad_chan_lab, bad_trial_lab] = ft_artifact_muscle(cfg, data, eogh, eogv)
+%   [data_clean, bad_chan_lab, bad_trial_lab] = ft_artifact_automatic(cfg, data, eogh, eogv)
 %
 %   Inputs:
 %   data = EEG data
