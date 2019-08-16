@@ -565,8 +565,14 @@ if plot_ica1    %   If user specified to plot rejected components
     else
         caxis([-colmin colmin]);
     end;
-    xticks = ([timeaxis_begind timeaxis_zeroind timeaxis_endind]);
-    xticklabels = ({num2str(timeaxis_beg), num2str(timeaxis_zero), num2str(timeaxis_end)});
+    %   Take care of cases where the time axis starts at the zero point
+    if timeaxis_begind == timeaxis_zeroind
+        xticks = ([timeaxis_zeroind timeaxis_endind]);
+        xticklabels = ({num2str(timeaxis_zero), num2str(timeaxis_end)});
+    else
+        xticks = ([timeaxis_begind timeaxis_zeroind timeaxis_endind]);
+        xticklabels = ({num2str(timeaxis_beg), num2str(timeaxis_zero), num2str(timeaxis_end)});
+    end;
     set(gca, 'XTick', xticks, 'XTickLabel', xticklabels, 'FontSize', 16, 'FontName', 'Arial');
     xlabel('Time (s)', 'FontSize', 18, 'FontName', 'Arial', 'FontWeight', 'Bold');
     ylabel('Trial Number', 'FontSize', 18, 'FontName', 'Arial', 'FontWeight', 'Bold');
@@ -637,8 +643,14 @@ if plot_ica1    %   If user specified to plot rejected components
     else
         caxis([-colmin colmin]);
     end;
-    xticks = ([timeaxis_begind timeaxis_zeroind timeaxis_endind]);
-    xticklabels = ({num2str(timeaxis_beg), num2str(timeaxis_zero), num2str(timeaxis_end)});
+    %   Take care of cases where the time axis starts at the zero point
+    if timeaxis_begind == timeaxis_zeroind
+        xticks = ([timeaxis_zeroind timeaxis_endind]);
+        xticklabels = ({num2str(timeaxis_zero), num2str(timeaxis_end)});
+    else
+        xticks = ([timeaxis_begind timeaxis_zeroind timeaxis_endind]);
+        xticklabels = ({num2str(timeaxis_beg), num2str(timeaxis_zero), num2str(timeaxis_end)});
+    end;
     set(gca, 'XTick', xticks, 'XTickLabel', xticklabels, 'FontSize', 16, 'FontName', 'Arial');
     xlabel('Time (s)', 'FontSize', 18, 'FontName', 'Arial', 'FontWeight', 'Bold');
     ylabel('Trial Number', 'FontSize', 18, 'FontName', 'Arial', 'FontWeight', 'Bold');
@@ -892,8 +904,14 @@ for i = 1:ceil(length(comp2_medfilt.label)/2)
             timeaxis_beg2 = comp2.time{1}(timeaxis_begind2);
             timeaxis_zero2 = comp2.time{1}(timeaxis_zeroind2);
             timeaxis_end2 = comp2.time{1}(timeaxis_endind2);
-            xticks = ([timeaxis_begind2 timeaxis_zeroind2 timeaxis_endind2]);
-            xticklabels = ({num2str(timeaxis_beg2), num2str(timeaxis_zero2), num2str(timeaxis_end2)});
+            %   Take care of cases where the time axis starts at the zero point
+            if timeaxis_begind2 == timeaxis_zeroind2
+                xticks = ([timeaxis_zeroind2 timeaxis_endind2]);
+                xticklabels = ({num2str(timeaxis_zero2), num2str(timeaxis_end2)});
+            else
+                xticks = ([timeaxis_begind2 timeaxis_zeroind2 timeaxis_endind2]);
+                xticklabels = ({num2str(timeaxis_beg2), num2str(timeaxis_zero2), num2str(timeaxis_end2)});
+            end;
             set(gca, 'XTick', xticks, 'XTickLabel', xticklabels, 'FontSize', 16, 'FontName', 'Arial');
             xlabel('Time (s)', 'FontSize', 18, 'FontName', 'Arial', 'FontWeight', 'Bold');
             ylabel('Trial Number', 'FontSize', 18, 'FontName', 'Arial', 'FontWeight', 'Bold');
@@ -1192,8 +1210,14 @@ if ~isempty(removed_trials_ind)
         else
             caxis([-colmin colmin]);
         end;
-        xticks = ([timeaxis_begind timeaxis_zeroind timeaxis_endind]);
-        xticklabels = ({num2str(timeaxis_beg), num2str(timeaxis_zero), num2str(timeaxis_end)});
+        %   Take care of cases where the time axis starts at the zero point
+        if timeaxis_begind == timeaxis_zeroind
+            xticks = ([timeaxis_zeroind timeaxis_endind]);
+            xticklabels = ({num2str(timeaxis_zero), num2str(timeaxis_end)});
+        else
+            xticks = ([timeaxis_begind timeaxis_zeroind timeaxis_endind]);
+            xticklabels = ({num2str(timeaxis_beg), num2str(timeaxis_zero), num2str(timeaxis_end)});
+        end;
         set(gca, 'XTick', xticks, 'XTickLabel', xticklabels, 'FontSize', 16, 'FontName', 'Arial');
         xlabel('Time (s)', 'FontSize', 18, 'FontName', 'Arial', 'FontWeight', 'Bold');
         ylabel('Channel Number', 'FontSize', 18, 'FontName', 'Arial', 'FontWeight', 'Bold');
@@ -1230,8 +1254,14 @@ if ~isempty(removed_channels_lab)
         else
             caxis([-colmin colmin]);
         end;
-        xticks = ([timeaxis_begind timeaxis_zeroind timeaxis_endind]);
-        xticklabels = ({num2str(timeaxis_beg), num2str(timeaxis_zero), num2str(timeaxis_end)});
+        %   Take care of cases where the time axis starts at the zero point
+        if timeaxis_begind == timeaxis_zeroind
+            xticks = ([timeaxis_zeroind timeaxis_endind]);
+            xticklabels = ({num2str(timeaxis_zero), num2str(timeaxis_end)});
+        else
+            xticks = ([timeaxis_begind timeaxis_zeroind timeaxis_endind]);
+            xticklabels = ({num2str(timeaxis_beg), num2str(timeaxis_zero), num2str(timeaxis_end)});
+        end;
         set(gca, 'XTick', xticks, 'XTickLabel', xticklabels, 'FontSize', 16, 'FontName', 'Arial');
         xlabel('Time (s)', 'FontSize', 18, 'FontName', 'Arial', 'FontWeight', 'Bold');
         ylabel('Trial Number', 'FontSize', 18, 'FontName', 'Arial', 'FontWeight', 'Bold');
