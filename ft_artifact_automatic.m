@@ -270,10 +270,10 @@ end;
 if isfield(cfg, 'ica2_trialrej_maxprop')
     ica2_trialrej_maxprop = cfg.ica2_trialrej_maxprop;          %   Maximum proportion of trials exhibiting artifacts before component is considered artificatual
 end;
-if isfield(cfg, 'cfg.eogv_corrmin_ica2')
+if isfield(cfg, 'eogv_corrmin_ica2')
     eogv_corrmin_ica2 = cfg.eogv_corrmin_ica2;                  %   Minimum correlation value for component to be considered as capturing EOGV artifacts in second round of ICA
 end;
-if isfield(cfg, 'cfg.eogh_corrmin_ica2')
+if isfield(cfg, 'eogh_corrmin_ica2')
     eogh_corrmin_ica2 = cfg.eogh_corrmin_ica2;                  %   Minimum correlation value for component to be considered as capturing EOGH artifacts in second round of ICA
 end;
 if isfield(cfg, 'plot_ica2')
